@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Login - Sprectex Email{% endblock %}
+{% block auth_content %}
+<div class="login-card">
+  <div class="brand-mark">S</div>
+  <h1>Admin Login</h1>
+  <p class="muted">Sprectex AI Email Automation</p>
+  <form method="post">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required autofocus>
+    <button type="submit" class="btn btn-primary">Login</button>
+  </form>
+</div>
+{% endblock %}

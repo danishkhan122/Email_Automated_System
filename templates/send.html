@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Send Emails - Sprectex Email{% endblock %}
+{% block page_title %}Send Emails{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Send Emails</h1>
+  <p>Choose how you want to send - one contact at a time, or all pending at once.</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card small">
+    <div class="stat-value">{{ remaining_today }}</div>
+    <div class="stat-label">Emails left today (max {{ daily_limit }}/day)</div>
+  </div>
+</div>
+
+<div class="mode-tabs">
+  <a href="{{ url_for('send_emails', mode='individual', product_id=selected_product_id, industry_id=selected_industry_id, country_id=selected_country_id) }}"
+     class="mode-tab {% if mode == 'individual' %}active{% endif %}">
+    <strong>Individual Send</strong>
+    <span>Pick each contact and send manually</span>
+  </a>
+  <a href="{{ url_for('send_emails', mode='batch', product_id=selected_product_id, industry_id=selected_industry_id, country_id=selected_country_id) }}"
+     class="mode-tab {% if mode == 'batch' %}active{% endif %}">
+    <strong>Batch Send</strong>
+    <span>Send all pending emails at once</span>
+  </a>
+</div>
+
+{% if mode == 'individual' %}
+<div class="card">
+  <h2>Send Individually</h2>
+  <p class="card-desc">Select industry, review contacts, then click Send on each person you want to email.</p>
+
+  <form method="get" id="individual-filter-form">
+    <input type="hidden" name="mode" value="individual">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="product_id">Product *</label>
+        <select id="product_id" name="product_id" required>
+          <option value="">-- Select product --</option>
+          {% for product in products %}
+          <option value="{{ product.id }}" {% if selected_product_id == product.id|string %}selected{% endif %}>
+            {{ product.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" id="industry-group" hidden>
+        <label for="industry_id" id="industry-label">Industry *</label>
+        <select id="industry_id" name="industry_id">
+          <option value="">-- Select industry --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="country_id">Country <span class="optional">(optional)</span></label>
+        <select id="country_id" name="country_id">
+          <option value="">All countries</option>
+          {% for country in countries %}
+          <option value="{{ country.id }}" {% if selected_country_id == country.id|string %}selected{% endif %}>
+            {{ country.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Show Contacts</button>
+  </form>
+</div>
+
+{% if selected_product and selected_industry %}
+<div class="card preview-card">
+  <h2>Template Preview</h2>
+  <p><strong>Product:</strong> {{ selected_product.name }} &nbsp;|&nbsp; <strong>Industry:</strong> {{ selected_industry.name }}</p>
+  <p><strong>Subject:</strong> {{ preview_subject }}</p>
+  <p><strong>Proposal:</strong>
+    {% if has_proposal %}
+      <span class="badge badge-sent">{{ proposal_file }}</span>
+    {% else %}
+      <span class="badge badge-failed">No proposal file yet</span>
+    {% endif %}
+  </p>
+  <pre class="email-preview">{{ preview_body }}</pre>
+</div>
+
+<div class="card">
+  <div class="card-header-row">
+    <h2>Pending Contacts ({{ contacts|length }})</h2>
+    {% if selected_country %}<span class="filter-tag">{{ selected_country.name }}</span>{% endif %}
+  </div>
+
+  {% if contacts %}
+  <table class="contacts-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Company</th>
+        <th>Country</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for contact in contacts %}
+      <tr>
+        <td>{{ contact.name or '-' }}</td>
+        <td>{{ contact.email }}</td>
+        <td>{{ contact.company or '-' }}</td>
+        <td>{{ contact.country_name or '-' }}</td>
+        <td>
+          <form method="post" class="inline-form">
+            <input type="hidden" name="action" value="send_one">
+            <input type="hidden" name="mode" value="individual">
+            <input type="hidden" name="contact_id" value="{{ contact.id }}">
+            <input type="hidden" name="product_id" value="{{ selected_product_id }}">
+            <input type="hidden" name="industry_id" value="{{ selected_industry_id }}">
+            <input type="hidden" name="country_id" value="{{ selected_country_id }}">
+            <button type="submit" class="btn btn-primary btn-sm"
+              {% if remaining_today == 0 %}disabled{% endif %}
+              onclick="return confirm('Send email to {{ contact.name or contact.email }}?')">
+              Send Email
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-state">No pending contacts. Upload a CSV first.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+  <h2>Batch Send</h2>
+  <p class="card-desc">Sends all pending contacts for the selected product, industry, and country in one go.</p>
+
+  <form method="post" id="batch-form">
+    <input type="hidden" name="mode" value="batch">
+    <div class="form-group">
+      <label for="batch_product_id">Product *</label>
+      <select id="batch_product_id" name="product_id" required>
+        <option value="">-- Select product --</option>
+        {% for product in products %}
+        <option value="{{ product.id }}" {% if selected_product_id == product.id|string %}selected{% endif %}>
+          {{ product.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group" id="batch-industry-group" hidden>
+      <label for="batch_industry_id" id="batch-industry-label">Industry *</label>
+      <select id="batch_industry_id" name="industry_id">
+        <option value="">-- Select industry --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="batch_country_id">Country *</label>
+      <select id="batch_country_id" name="country_id" required>
+        <option value="">-- Select country --</option>
+        {% for country in countries %}
+        <option value="{{ country.id }}" {% if selected_country_id == country.id|string %}selected{% endif %}>
+          {{ country.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" name="action" value="preview" class="btn btn-secondary">Preview Template</button>
+      <button type="submit" name="action" value="send" class="btn btn-primary"
+        {% if remaining_today == 0 %}disabled{% endif %}
+        onclick="return confirm('Send all pending emails for this selection?')">
+        Send All Pending
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if preview and mode == 'batch' %}
+<div class="card preview-card">
+  <h2>Template Preview</h2>
+  {% if selected_product %}<p><strong>Product:</strong> {{ selected_product.name }}</p>{% endif %}
+  {% if selected_industry %}<p><strong>Industry:</strong> {{ selected_industry.name }}</p>{% endif %}
+  <p><strong>Subject:</strong> {{ preview_subject }}</p>
+  <p><strong>Proposal:</strong>
+    {% if has_proposal %}
+      <span class="badge badge-sent">{{ proposal_file }}</span>
+    {% else %}
+      <span class="badge badge-failed">No proposal file yet</span>
+    {% endif %}
+  </p>
+  <pre class="email-preview">{{ preview }}</pre>
+</div>
+{% endif %}
+{% endif %}
+
+<script>
+  const productTree = {{ product_tree_json | safe }};
+  const savedIndustryId = "{{ selected_industry_id }}";
+
+  function setupIndustryDropdown(productSelectId, industryGroupId, industrySelectId, labelId) {
+    const productSelect = document.getElementById(productSelectId);
+    const industryGroup = document.getElementById(industryGroupId);
+    const industrySelect = document.getElementById(industrySelectId);
+    const industryLabel = document.getElementById(labelId);
+    if (!productSelect) return;
+
+    function update() {
+      const productId = parseInt(productSelect.value, 10);
+      const product = productTree.find(p => p.id === productId);
+      industrySelect.innerHTML = '<option value="">-- Select industry --</option>';
+
+      if (product && product.has_children) {
+        industryGroup.hidden = false;
+        industrySelect.required = true;
+        industryLabel.textContent = product.slug === 'video_analytics'
+          ? 'Video Analytics Industry *'
+          : 'Target Industry *';
+        product.children.forEach(child => {
+          const opt = document.createElement('option');
+          opt.value = child.id;
+          opt.textContent = child.name;
+          if (savedIndustryId && savedIndustryId === String(child.id)) opt.selected = true;
+          industrySelect.appendChild(opt);
+        });
+      } else {
+        industryGroup.hidden = true;
+        industrySelect.required = false;
+        industrySelect.value = '';
+      }
+    }
+
+    productSelect.addEventListener('change', update);
+    update();
+  }
+
+  setupIndustryDropdown('product_id', 'industry-group', 'industry_id', 'industry-label');
+  setupIndustryDropdown('batch_product_id', 'batch-industry-group', 'batch_industry_id', 'batch-industry-label');
+</script>
+{% endblock %}

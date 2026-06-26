@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Upload Details - Sprectex Email{% endblock %}
+{% block page_title %}Upload Details{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Uploaded Contacts</h1>
+  <p>{{ upload.contact_count }} contact(s) from <strong>{{ upload.original_filename }}</strong></p>
+</div>
+
+<div class="upload-meta card">
+  <div class="meta-grid">
+    <div class="meta-item">
+      <span class="meta-label">Product</span>
+      <span class="meta-value">{{ upload.product_name }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Industry</span>
+      <span class="meta-value">{{ upload.industry_name }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Country</span>
+      <span class="meta-value">{{ upload.country_name }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Uploaded</span>
+      <span class="meta-value">{{ upload.uploaded_at[:16] }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">File</span>
+      <span class="meta-value">{{ upload.original_filename }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Contacts</span>
+      <span class="meta-value">{{ upload.contact_count }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Contacts in this file</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Company</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for contact in contacts %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ contact.name or '—' }}</td>
+        <td>{{ contact.email }}</td>
+        <td>{{ contact.company or '—' }}</td>
+        <td>
+          {% if contact.status == 'pending' %}
+          <span class="badge badge-pending">Pending</span>
+          {% elif contact.status == 'sent' %}
+          <span class="badge badge-sent">Sent</span>
+          {% else %}
+          <span class="badge badge-failed">Failed</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="empty-state">No contacts found for this upload.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="actions-row">
+  <a href="{{ url_for('send_emails', mode='individual', product_id=upload.product_id, industry_id=upload.industry_id, country_id=upload.country_id) }}" class="btn btn-primary">Send to These Contacts</a>
+  <a href="{{ url_for('upload_csv') }}" class="btn btn-secondary">Back to Upload</a>
+</div>
+{% endblock %}

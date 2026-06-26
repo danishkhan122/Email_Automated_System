@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Sprectex Email{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard-page">
+  <div class="page-head">
+    <h1>Welcome back</h1>
+    <p>Overview of your email campaigns, live industry news, and pitch suggestions.</p>
+  </div>
+
+  <div class="dashboard-layout">
+    <div class="dashboard-main">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">{{ sent_today }} / {{ daily_limit }}</div>
+          <div class="stat-label">Emails Sent Today</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="stat-value">{{ remaining_today }}</div>
+          <div class="stat-label">Remaining Today</div>
+        </div>
+        <div class="stat-card auto-send-card">
+          <div class="stat-value">
+            {% if auto_send_enabled %}
+            <span class="auto-dot on"></span> ON
+            {% else %}
+            <span class="auto-dot off"></span> OFF
+            {% endif %}
+          </div>
+          <div class="stat-label">Auto-Send 24/7</div>
+        </div>
+      </div>
+
+      <div class="card auto-send-panel">
+        <h2>Automatic Email System</h2>
+        <p class="panel-sub">Runs without human interaction — sends industry-specific emails to pending contacts from uploaded CSV files.</p>
+        <div class="auto-send-grid">
+          <div class="auto-send-item">
+            <span class="auto-send-label">Status</span>
+            <span class="auto-send-value">
+              {% if auto_send_enabled %}Active — checking every {{ auto_send_interval }} min{% else %}Disabled{% endif %}
+            </span>
+          </div>
+          <div class="auto-send-item">
+            <span class="auto-send-label">Per run</span>
+            <span class="auto-send-value">Up to {{ auto_send_per_run }} emails (max {{ daily_limit }}/day)</span>
+          </div>
+          <div class="auto-send-item">
+            <span class="auto-send-label">Pending contacts</span>
+            <span class="auto-send-value">{{ auto_status.pending }}</span>
+          </div>
+          <div class="auto-send-item">
+            <span class="auto-send-label">Last auto-run</span>
+            <span class="auto-send-value">
+              {% if auto_status.last_run %}
+              {{ auto_status.last_run.ran_at[:16] }} — {{ auto_status.last_run.sent }} sent, {{ auto_status.last_run.failed }} failed
+              {% else %}
+              Not run yet (starts within {{ auto_send_interval }} min)
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        {% if auto_status.last_run and auto_status.last_run.message %}
+        <p class="auto-send-note">{{ auto_status.last_run.message }}</p>
+        {% endif %}
+      </div>
+
+      <div class="send-mode-cards">
+        <a href="{{ url_for('send_emails', mode='individual') }}" class="mode-card">
+          <div class="mode-card-icon individual">1</div>
+          <h3>Send Individually</h3>
+          <p>Pick each contact one by one and send manually. Full control over every email.</p>
+          <span class="mode-card-link">Start individual send &rarr;</span>
+        </a>
+        <a href="{{ url_for('send_emails', mode='batch') }}" class="mode-card">
+          <div class="mode-card-icon batch">All</div>
+          <h3>Send in Batch</h3>
+          <p>Send all pending emails for a product and industry at once automatically.</p>
+          <span class="mode-card-link">Start batch send &rarr;</span>
+        </a>
+        <a href="{{ url_for('compose_email') }}" class="mode-card">
+          <div class="mode-card-icon direct">@</div>
+          <h3>Direct Email</h3>
+          <p>Type any email address yourself and send immediately without uploading CSV.</p>
+          <span class="mode-card-link">Compose direct email &rarr;</span>
+        </a>
+      </div>
+
+      <div class="card compact-stats">
+        <h2>Contacts Overview</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Industry</th>
+              <th>Pending</th>
+              <th>Sent</th>
+              <th>Failed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in stats_rows if row.pending or row.sent or row.failed %}
+            <tr>
+              <td>{{ row.product_name }}</td>
+              <td>{{ row.industry_name }}</td>
+              <td><span class="badge badge-pending">{{ row.pending }}</span></td>
+              <td><span class="badge badge-sent">{{ row.sent }}</span></td>
+              <td><span class="badge badge-failed">{{ row.failed }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="empty-state">No contact data yet. Upload a CSV to get started.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions-row">
+        <a href="{{ url_for('upload_csv') }}" class="btn btn-primary">Upload CSV</a>
+        <a href="{{ url_for('send_emails', mode='individual') }}" class="btn btn-secondary">Send Emails</a>
+      </div>
+    </div>
+
+    <aside class="dashboard-sidebar">
+      <div class="card news-panel">
+        <div class="panel-head">
+          <h2>Industry &amp; AI News</h2>
+          <span class="news-updated">Updated {{ news_updated }}</span>
+        </div>
+        <p class="panel-sub">Live feed via Google News RSS (free, no API key needed)</p>
+
+        {% if news_items %}
+        <div class="news-list">
+          {% for item in news_items %}
+          <article class="news-item">
+            <span class="news-tag {% if item.category == 'AI Market' %}tag-market{% else %}tag-industry{% endif %}">
+              {{ item.category }}
+            </span>
+            <a href="{{ item.link }}" target="_blank" rel="noopener" class="news-title">{{ item.title }}</a>
+            {% if item.date %}<time class="news-date">{{ item.date }}</time>{% endif %}
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">News could not be loaded right now. Check your internet connection and refresh.</p>
+        {% endif %}
+      </div>
+
+      <div class="card pitch-panel">
+        <h2>Pitch Suggestions</h2>
+        <p class="panel-sub">When and where to reach out for best results</p>
+
+        <div class="pitch-list">
+          {% for tip in pitch_suggestions %}
+          <div class="pitch-item priority-{{ tip.priority }}">
+            <div class="pitch-priority">{{ tip.priority|upper }}</div>
+            <h3>{{ tip.title }}</h3>
+            <p>{{ tip.detail }}</p>
+            {% if tip.action == 'individual' %}
+            <a href="{{ url_for('send_emails', mode='individual') }}" class="pitch-action">Go to Individual Send &rarr;</a>
+            {% elif tip.action == 'batch' %}
+            <a href="{{ url_for('send_emails', mode='batch') }}" class="pitch-action">Go to Batch Send &rarr;</a>
+            {% elif tip.action == 'compose' %}
+            <a href="{{ url_for('compose_email') }}" class="pitch-action">Compose Direct Email &rarr;</a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card intel-panel">
+        <h2>Industry Playbook</h2>
+        <p class="panel-sub">Quick reference for all products in your system</p>
+        <div class="intel-accordion">
+          {% for item in industry_intel %}
+          <details class="intel-item">
+            <summary>{{ item.name }}</summary>
+            <div class="intel-body">
+              <p><strong>Opportunity:</strong> {{ item.opportunity }}</p>
+              <p><strong>When to pitch:</strong> {{ item.pitch_when }}</p>
+              <p><strong>Best time:</strong> {{ item.best_time }}</p>
+              <p><strong>Pitch to:</strong> {{ item.pitch_to }}</p>
+            </div>
+          </details>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

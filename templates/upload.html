@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Upload CSV - Sprectex Email{% endblock %}
+{% block page_title %}Upload CSV{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Upload CSV</h1>
+  <p>Select product, industry, and country - contacts are saved under that selection.</p>
+</div>
+
+<div class="card">
+  <form method="post" enctype="multipart/form-data" id="upload-form">
+    <div class="form-group">
+      <label for="product_id">Product *</label>
+      <select id="product_id" name="product_id" required>
+        <option value="">-- Select product --</option>
+        {% for product in products %}
+        <option value="{{ product.id }}">{{ product.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group" id="industry-group" hidden>
+      <label for="industry_id" id="industry-label">Industry *</label>
+      <select id="industry_id" name="industry_id">
+        <option value="">-- Select industry --</option>
+      </select>
+      <small class="hint" id="industry-hint"></small>
+    </div>
+
+    <div class="form-group">
+      <label for="country_id">Country *</label>
+      <select id="country_id" name="country_id" required>
+        <option value="">-- Select country --</option>
+        {% for country in countries %}
+        <option value="{{ country.id }}">{{ country.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="csv_file">CSV File *</label>
+      <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+      <small class="hint">Required column: <code>email</code>. Optional: <code>name</code>, <code>company</code></small>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Upload Contacts</button>
+  </form>
+</div>
+
+<div class="card info-card">
+  <h3>Products</h3>
+  <ul class="product-list">
+    <li><strong>AI Recruiter System</strong> - select target industry</li>
+    <li><strong>Supply Chain Forecasting</strong> - select target industry</li>
+    <li><strong>Video Analytics Solution</strong> - poultry, sports, fitness, manufacturing, smart cities, and more</li>
+  </ul>
+</div>
+
+<div class="card upload-history-card">
+  <h2>Upload History</h2>
+  <p class="panel-sub">Day-wise record of all CSV files uploaded</p>
+
+  {% if upload_history %}
+  <div class="history-timeline">
+    {% for day in upload_history %}
+    <section class="history-day">
+      <div class="history-day-head">
+        <h3>{{ day.date }}</h3>
+        <span class="history-day-stats">{{ day.file_count }} file(s) · {{ day.contact_count }} contact(s)</span>
+      </div>
+      <div class="history-files">
+        {% for upload in day.uploads %}
+        <a href="{{ url_for('upload_detail', upload_id=upload.id) }}" class="history-file-row">
+          <div class="history-file-main">
+            <span class="history-filename">{{ upload.original_filename }}</span>
+            <span class="history-meta">{{ upload.product_name }} · {{ upload.industry_name }} · {{ upload.country_name }}</span>
+          </div>
+          <div class="history-file-side">
+            <span class="badge badge-pending">{{ upload.contact_count }} contacts</span>
+            <span class="history-time">{{ upload.uploaded_at[11:16] }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty-state">No uploads yet. Upload your first CSV file above.</p>
+  {% endif %}
+</div>
+
+<script>
+  const productTree = {{ product_tree_json | safe }};
+  const productSelect = document.getElementById('product_id');
+  const industryGroup = document.getElementById('industry-group');
+  const industrySelect = document.getElementById('industry_id');
+  const industryLabel = document.getElementById('industry-label');
+  const industryHint = document.getElementById('industry-hint');
+
+  function updateIndustries() {
+    const productId = parseInt(productSelect.value, 10);
+    const product = productTree.find(p => p.id === productId);
+    industrySelect.innerHTML = '<option value="">-- Select industry --</option>';
+
+    if (product && product.has_children) {
+      industryGroup.hidden = false;
+      industrySelect.required = true;
+      industryLabel.textContent = product.slug === 'video_analytics'
+        ? 'Video Analytics Industry *'
+        : 'Target Industry *';
+      industryHint.textContent = product.slug === 'video_analytics'
+        ? 'Choose the specific industry for video analytics outreach.'
+        : 'Choose the industry segment for this campaign.';
+      product.children.forEach(child => {
+        const opt = document.createElement('option');
+        opt.value = child.id;
+        opt.textContent = child.name;
+        industrySelect.appendChild(opt);
+      });
+    } else {
+      industryGroup.hidden = true;
+      industrySelect.required = false;
+      industrySelect.value = '';
+    }
+  }
+
+  productSelect.addEventListener('change', updateIndustries);
+</script>
+{% endblock %}

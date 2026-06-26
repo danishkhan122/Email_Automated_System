@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Direct Email - Sprectex Email{% endblock %}
+{% block page_title %}Direct Email{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Send Direct Email</h1>
+  <p>Type recipient details yourself and send immediately - no CSV required.</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card small">
+    <div class="stat-value">{{ remaining_today }}</div>
+    <div class="stat-label">Emails left today (max {{ daily_limit }}/day)</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Compose Email</h2>
+  <p class="card-desc">Select product and industry, enter recipient details, then preview or send directly.</p>
+
+  <form method="post" id="compose-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="product_id">Product *</label>
+        <select id="product_id" name="product_id" required>
+          <option value="">-- Select product --</option>
+          {% for product in products %}
+          <option value="{{ product.id }}" {% if form.product_id == product.id|string %}selected{% endif %}>
+            {{ product.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" id="industry-group" hidden>
+        <label for="industry_id" id="industry-label">Industry *</label>
+        <select id="industry_id" name="industry_id">
+          <option value="">-- Select industry --</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="email">Recipient Email *</label>
+        <input type="email" id="email" name="email" value="{{ form.email }}" placeholder="client@company.com" required>
+      </div>
+      <div class="form-group">
+        <label for="name">Recipient Name</label>
+        <input type="text" id="name" name="name" value="{{ form.name }}" placeholder="John Smith">
+        <small class="hint">Used in greeting: Hi John,</small>
+      </div>
+      <div class="form-group">
+        <label for="company">Company</label>
+        <input type="text" id="company" name="company" value="{{ form.company }}" placeholder="ABC Sports Club">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" name="action" value="preview" class="btn btn-secondary">Preview Template</button>
+      <button type="submit" name="action" value="send" class="btn btn-primary"
+        {% if remaining_today == 0 %}disabled{% endif %}
+        onclick="return confirm('Send email directly to this recipient?')">
+        Send Direct Email
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if preview_body %}
+<div class="card preview-card">
+  <h2>Template Preview</h2>
+  {% if selected_product %}<p><strong>Product:</strong> {{ selected_product.name }}</p>{% endif %}
+  {% if selected_industry %}<p><strong>Industry:</strong> {{ selected_industry.name }}</p>{% endif %}
+  {% if form.email %}<p><strong>To:</strong> {{ form.name or form.email }} &lt;{{ form.email }}&gt;</p>{% endif %}
+  <p><strong>Subject:</strong> {{ preview_subject }}</p>
+  <p><strong>Proposal:</strong>
+    {% if has_proposal %}
+      <span class="badge badge-sent">{{ proposal_file }}</span>
+    {% else %}
+      <span class="badge badge-failed">No proposal file found</span>
+    {% endif %}
+  </p>
+  <pre class="email-preview">{{ preview_body }}</pre>
+</div>
+{% endif %}
+
+<script>
+  const productTree = {{ product_tree_json | safe }};
+  const productSelect = document.getElementById('product_id');
+  const industryGroup = document.getElementById('industry-group');
+  const industrySelect = document.getElementById('industry_id');
+  const industryLabel = document.getElementById('industry-label');
+  const savedIndustryId = "{{ form.industry_id }}";
+
+  function updateIndustries() {
+    const productId = parseInt(productSelect.value, 10);
+    const product = productTree.find(p => p.id === productId);
+    industrySelect.innerHTML = '<option value="">-- Select industry --</option>';
+
+    if (product && product.has_children) {
+      industryGroup.hidden = false;
+      industrySelect.required = true;
+      industryLabel.textContent = product.slug === 'video_analytics'
+        ? 'Video Analytics Industry *'
+        : 'Target Industry *';
+      product.children.forEach(child => {
+        const opt = document.createElement('option');
+        opt.value = child.id;
+        opt.textContent = child.name;
+        if (savedIndustryId && savedIndustryId === String(child.id)) opt.selected = true;
+        industrySelect.appendChild(opt);
+      });
+    } else {
+      industryGroup.hidden = true;
+      industrySelect.required = false;
+      industrySelect.value = '';
+    }
+  }
+
+  productSelect.addEventListener('change', updateIndustries);
+  updateIndustries();
+</script>
+{% endblock %}
