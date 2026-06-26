@@ -94,6 +94,43 @@ john@acme.com,John Doe,Acme Corp
   auto-send) and data resets on restart. Change `plan: starter` to `plan: free`
   in `render.yaml` to try it, and remove the `disk:` block (free has no disk).
 
+## Deploy on your own cPanel (sprectexai.com) — without touching the existing site
+
+Your existing website stays untouched. Run this app on a **subdomain** like
+`mail.sprectexai.com` (it is login-protected, so it stays effectively private).
+
+### Requirements
+Your hosting must have cPanel's **"Setup Python App"** (Passenger). If you don't
+see it in cPanel, ask your host to enable Python, or use Render instead.
+
+### Steps
+1. **Create a subdomain** in cPanel -> *Domains / Subdomains*, e.g.
+   `mail.sprectexai.com`. Note its document root (e.g. `/home/USER/mail`).
+2. **Upload the project** there (Git clone, or upload a zip and extract). Keep
+   the existing site's folders separate — this only lives in the subdomain folder.
+3. **cPanel -> Setup Python App -> Create Application**:
+   - Python version: 3.10+ ; Application root: the subdomain folder ;
+     Application URL: the subdomain ; Startup file: `passenger_wsgi.py` ;
+     Entry point/Application object: `application`.
+4. In that screen, **Run pip install** of `requirements.txt` (or use the given
+   "Enter virtual environment" command, then `pip install -r requirements.txt`).
+5. **Set environment variables** in the same screen (don't rely on `.env`):
+   `ADMIN_PASSWORD`, `EMAIL_PASSWORD`, `SMTP_SERVER`, `SMTP_PORT`, `EMAIL_FROM`,
+   `CC_RECEIVERS`, `DAILY_EMAIL_LIMIT`, and `AUTO_SEND_ENABLED=false`.
+6. **Restart** the app. Open `https://mail.sprectexai.com` and log in.
+
+### 24/7 auto-send on cPanel = use a Cron Job (not the built-in scheduler)
+Shared hosting pauses idle apps, so the background scheduler won't run reliably.
+Instead, cPanel -> **Cron Jobs** -> add (every 30 minutes):
+
+```
+*/30 * * * * /home/USER/virtualenv/APPDIR/3.11/bin/python /home/USER/APPDIR/cron_auto_send.py >> /home/USER/APPDIR/cron.log 2>&1
+```
+
+Replace `USER`, `APPDIR`, and the Python version with the exact paths shown in
+your "Setup Python App" screen (it lists the virtualenv path). The cron respects
+`DAILY_EMAIL_LIMIT` and `AUTO_SEND_PER_RUN`, so still max 20/day.
+
 ## Run on local network (free alternative)
 
 Run on one always-on PC and let the team access it over the same WiFi:
