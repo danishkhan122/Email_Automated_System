@@ -1,5 +1,5 @@
-# Secrets
-.env
+# Secrets — .env is included because this is a private repo
+# .env
 
 # Python
 __pycache__/
