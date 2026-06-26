@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: sprectex-email-system
+    runtime: python
+    plan: starter            # "starter" ($7/mo) supports a persistent disk + true 24/7. Use "free" to try first (data resets on restart, sleeps when idle).
+    buildCommand: pip install -r requirements.txt
+    # Single worker so only ONE auto-send scheduler runs (no duplicate emails).
+    startCommand: gunicorn wsgi:app --workers 1 --timeout 120 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_SERVER
+        value: mail.sprectexai.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: EMAIL_FROM
+        value: shamaim@sprectexai.com
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: CC_RECEIVERS
+        value: osama@sprectexai.com,sales@sprectexai.com,danish.khan@sprectexai.com
+      - key: DAILY_EMAIL_LIMIT
+        value: "20"
+      - key: AUTO_SEND_ENABLED
+        value: "true"
+      - key: AUTO_SEND_INTERVAL_MINUTES
+        value: "30"
+      - key: AUTO_SEND_PER_RUN
+        value: "5"
+      - key: AUTO_SEND_EMAIL_DELAY_SECONDS
+        value: "3"
+    disk:
+      name: sprectex-data
+      mountPath: /var/data
+      sizeGB: 1

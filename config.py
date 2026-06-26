@@ -31,10 +31,14 @@ AUTO_SEND_INTERVAL_MINUTES = int(os.getenv("AUTO_SEND_INTERVAL_MINUTES", "30"))
 AUTO_SEND_PER_RUN = int(os.getenv("AUTO_SEND_PER_RUN", "5"))
 AUTO_SEND_EMAIL_DELAY_SECONDS = float(os.getenv("AUTO_SEND_EMAIL_DELAY_SECONDS", "3"))
 
-DATABASE_PATH = BASE_DIR / "data" / "app.db"
-UPLOADS_DIR = BASE_DIR / "data" / "uploads"
+# DATA_DIR can be overridden in production (e.g. a Render persistent disk
+# mounted at /var/data) so the SQLite DB and uploads survive restarts.
+DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR / "data"))
+
+DATABASE_PATH = DATA_DIR / "app.db"
+UPLOADS_DIR = DATA_DIR / "uploads"
 PROPOSALS_DIR = BASE_DIR / "proposals"
 
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 PROPOSALS_DIR.mkdir(parents=True, exist_ok=True)
-(BASE_DIR / "data").mkdir(parents=True, exist_ok=True)
