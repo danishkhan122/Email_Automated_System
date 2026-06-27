@@ -10,6 +10,29 @@ PROPOSAL_MAP = {
 
 VIDEO_ANALYTICS_GENERAL = "Business Propsal Video Analytics Solution By Sprectex AI.pdf"
 
+# Optional demo video links included in the email body (not file attachments).
+PRODUCT_VIDEO_LINKS = {
+    "ai_recruiter": {
+        "url": "https://drive.google.com/file/d/18KAShPcRqNe8rvdxReplrmhLexTep6M9/view?usp=sharing",
+        "label": "AI Recruiter System Demo",
+    },
+}
+
+INDUSTRY_VIDEO_LINKS = {
+    "sports_organizations": {
+        "url": "https://drive.google.com/file/d/1UBHfsknS9KPYiuMjk-s3CHdn6e8NmYx9/view?usp=sharing",
+        "label": "Cricket Video Analytics Demo",
+    },
+}
+
+
+def resolve_video_link(product_slug, industry_slug=None):
+    if product_slug in PRODUCT_VIDEO_LINKS:
+        return PRODUCT_VIDEO_LINKS[product_slug]
+    if product_slug == "video_analytics" and industry_slug:
+        return INDUSTRY_VIDEO_LINKS.get(industry_slug)
+    return None
+
 
 def resolve_proposal_filename(product_slug, industry_slug=None):
     """Pick the best proposal PDF for product + industry."""
@@ -25,12 +48,25 @@ def resolve_proposal_filename(product_slug, industry_slug=None):
     return None
 
 
+def _find_file_case_insensitive(filename):
+    """Match a filename inside PROPOSALS_DIR ignoring case (Linux-safe)."""
+    target = PROPOSALS_DIR / filename
+    if target.exists():
+        return target
+    if not PROPOSALS_DIR.is_dir():
+        return None
+    lower = filename.lower()
+    for entry in PROPOSALS_DIR.iterdir():
+        if entry.is_file() and entry.name.lower() == lower:
+            return entry
+    return None
+
+
 def resolve_proposal_path(product_slug, industry_slug=None):
     filename = resolve_proposal_filename(product_slug, industry_slug)
     if not filename:
         return None
-    path = PROPOSALS_DIR / filename
-    return path if path.exists() else None
+    return _find_file_case_insensitive(filename)
 
 
 def list_available_proposals():

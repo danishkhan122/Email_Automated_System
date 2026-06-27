@@ -26,18 +26,22 @@ CC_RECEIVERS = [
 
 DAILY_EMAIL_LIMIT = int(os.getenv("DAILY_EMAIL_LIMIT", "20"))
 
-AUTO_SEND_ENABLED = os.getenv("AUTO_SEND_ENABLED", "true").lower() in ("1", "true", "yes")
-AUTO_SEND_INTERVAL_MINUTES = int(os.getenv("AUTO_SEND_INTERVAL_MINUTES", "30"))
-AUTO_SEND_PER_RUN = int(os.getenv("AUTO_SEND_PER_RUN", "5"))
-AUTO_SEND_EMAIL_DELAY_SECONDS = float(os.getenv("AUTO_SEND_EMAIL_DELAY_SECONDS", "3"))
-
-# DATA_DIR can be overridden in production (e.g. a Render persistent disk
-# mounted at /var/data) so the SQLite DB and uploads survive restarts.
 DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR / "data"))
 
 DATABASE_PATH = DATA_DIR / "app.db"
 UPLOADS_DIR = DATA_DIR / "uploads"
-PROPOSALS_DIR = BASE_DIR / "proposals"
+
+
+def _resolve_proposals_dir():
+    """Find the proposals folder regardless of case (Linux is case-sensitive)."""
+    for name in ("proposals", "Proposals", "PROPOSALS"):
+        candidate = BASE_DIR / name
+        if candidate.is_dir():
+            return candidate
+    return BASE_DIR / "proposals"
+
+
+PROPOSALS_DIR = _resolve_proposals_dir()
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
