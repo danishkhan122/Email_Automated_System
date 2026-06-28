@@ -176,7 +176,8 @@ INDUSTRY_TEMPLATES = {
             "Hi {first_name},",
             "I wanted to reach out because we have been working with several poultry operations, and I believe what we have built at Sprectex AI could be genuinely useful for {company}.",
             "Our AI video analytics platform watches your flock around the clock - tracking movement patterns, feeding behaviour, and early signs of stress or illness that are easy to miss during manual rounds. Farms using our system tell us it has helped them respond to issues days earlier and reduce losses they did not see coming.",
-            "I have attached a proposal tailored for poultry operations. If you have 15 minutes this week, I would love to show you a quick demo on how it works in a real farm environment.",
+            "I have attached a proposal tailored for poultry operations, and I have also shared a Chicks Video Analytics demo video in this email so you can see how it works on a real farm.",
+            "If you have 15 minutes this week, I would love to show you a quick walkthrough at a time that suits you.",
         ],
     },
     "sports_organizations": {
@@ -187,6 +188,16 @@ INDUSTRY_TEMPLATES = {
             "That is exactly what our AI video analytics platform does for teams like {company}. It automatically tracks player movements, generates performance reports, and gives coaches actionable insights they can use in the next training session - not next month.",
             "I have attached a proposal for sports organizations, and I have also shared a short Cricket Video Analytics demo video in this email so you can see the platform in action.",
             "Would you be open to a brief call? I think you will find the demo quite relevant to what your coaching staff is trying to achieve.",
+        ],
+    },
+    "car_industry": {
+        "subject": "Smarter workshop operations for {company}",
+        "paragraphs": [
+            "Hi {first_name},",
+            "I wanted to reach out because automotive workshops and car service businesses like {company} are under growing pressure to run bays efficiently, keep customers informed, and catch issues before they become costly delays.",
+            "Our AI video analytics platform helps workshops monitor bay activity, service flow, and floor operations in real time - giving managers better visibility without adding extra staff on the shop floor.",
+            "I have attached a proposal for your review, and I have also shared an Automotive Workshop Video Analytics demo video in this email so you can see how the system works in a real workshop environment.",
+            "If this sounds relevant to {company}, I would be happy to arrange a short call at a time that suits you.",
         ],
     },
     "fitness_gyms": {

@@ -22,6 +22,7 @@ VIDEO_ANALYTICS_INDUSTRIES = [
     ("construction_sites", "Construction Sites"),
     ("hotels_hospitality", "Hotels & Hospitality"),
     ("airports_transport", "Airports & Transport"),
+    ("car_industry", "Car Industry"),
 ]
 
 

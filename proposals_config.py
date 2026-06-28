@@ -13,15 +13,23 @@ VIDEO_ANALYTICS_GENERAL = "Business Propsal Video Analytics Solution By Sprectex
 # Optional demo video links included in the email body (not file attachments).
 PRODUCT_VIDEO_LINKS = {
     "ai_recruiter": {
-        "url": "https://drive.google.com/file/d/18KAShPcRqNe8rvdxReplrmhLexTep6M9/view?usp=sharing",
+        "url": "https://drive.google.com/file/d/1V4yFtymOQBoGEvP5wZsC9PEzTLzH56H8/view?usp=sharing",
         "label": "AI Recruiter System Demo",
     },
 }
 
 INDUSTRY_VIDEO_LINKS = {
+    "poultry_farms": {
+        "url": "https://drive.google.com/file/d/1b_X14DCjSOhMPDq5c-yw2cEjsE-EV_T5/view?usp=sharing",
+        "label": "Chicks Video Analytics Demo",
+    },
     "sports_organizations": {
         "url": "https://drive.google.com/file/d/1UBHfsknS9KPYiuMjk-s3CHdn6e8NmYx9/view?usp=sharing",
         "label": "Cricket Video Analytics Demo",
+    },
+    "car_industry": {
+        "url": "https://drive.google.com/file/d/12W3vKvj0dNM3pP2fNe73GAqoTfyQnvLP/view?usp=sharing",
+        "label": "Automotive Workshop Video Analytics Demo",
     },
 }
 
