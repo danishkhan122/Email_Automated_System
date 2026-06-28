@@ -115,16 +115,6 @@ def init_db():
 
             CREATE INDEX IF NOT EXISTS idx_csv_uploads_uploaded_at
                 ON csv_uploads(uploaded_at);
-
-            CREATE TABLE IF NOT EXISTS auto_send_runs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ran_at TEXT DEFAULT (datetime('now')),
-                sent INTEGER NOT NULL DEFAULT 0,
-                failed INTEGER NOT NULL DEFAULT 0,
-                skipped INTEGER NOT NULL DEFAULT 0,
-                message TEXT,
-                details TEXT
-            );
             """
         )
         _seed_countries(conn)
@@ -138,6 +128,8 @@ def _migrate_email_log(conn):
     columns = {row[1] for row in conn.execute("PRAGMA table_info(email_log)").fetchall()}
     if "recipient_email" not in columns:
         conn.execute("ALTER TABLE email_log ADD COLUMN recipient_email TEXT")
+    if "industry_id" not in columns:
+        conn.execute("ALTER TABLE email_log ADD COLUMN industry_id INTEGER")
 
 
 def _migrate_contacts_upload_id(conn):
@@ -525,14 +517,14 @@ def log_email(contact_id, product_id, status, error_message=None):
         )
 
 
-def log_direct_email(product_id, recipient_email, status, error_message=None):
+def log_direct_email(product_id, recipient_email, status, industry_id=None, error_message=None):
     with get_db() as conn:
         conn.execute(
             """
-            INSERT INTO email_log (contact_id, product_id, status, error_message, recipient_email)
-            VALUES (0, ?, ?, ?, ?)
+            INSERT INTO email_log (contact_id, product_id, industry_id, status, error_message, recipient_email)
+            VALUES (0, ?, ?, ?, ?, ?)
             """,
-            (product_id, status, error_message, recipient_email),
+            (product_id, industry_id, status, error_message, recipient_email),
         )
 
 
@@ -573,54 +565,65 @@ def emails_sent_today():
         return row["cnt"]
 
 
-def get_pending_contacts_queue(limit):
-    with get_db() as conn:
-        return conn.execute(
-            """
-            SELECT c.*, co.name AS country_name
-            FROM contacts c
-            LEFT JOIN countries co ON co.id = c.country_id
-            WHERE c.status = 'pending'
-            ORDER BY c.uploaded_at ASC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
-
-
-def count_pending_contacts():
+def get_email_history_stats():
     with get_db() as conn:
         row = conn.execute(
-            "SELECT COUNT(*) AS cnt FROM contacts WHERE status = 'pending'"
-        ).fetchone()
-        return row["cnt"]
-
-
-def log_auto_send_run(sent, failed, skipped=0, message="", details=""):
-    with get_db() as conn:
-        conn.execute(
             """
-            INSERT INTO auto_send_runs (sent, failed, skipped, message, details)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (sent, failed, skipped, message, details),
-        )
-
-
-def get_auto_send_status():
-    with get_db() as conn:
-        last_run = conn.execute(
-            """
-            SELECT * FROM auto_send_runs
-            ORDER BY ran_at DESC
-            LIMIT 1
+            SELECT
+                COUNT(CASE WHEN status = 'sent' THEN 1 END) AS total_sent,
+                COUNT(CASE WHEN status = 'failed' THEN 1 END) AS total_failed,
+                COUNT(CASE WHEN status = 'sent' AND date(sent_at) = date('now') THEN 1 END) AS sent_today
+            FROM email_log
             """
         ).fetchone()
+        return dict(row)
 
-    return {
-        "pending": count_pending_contacts(),
-        "last_run": last_run,
-    }
+
+def get_email_history_by_day():
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                el.id,
+                el.sent_at,
+                el.status,
+                el.error_message,
+                el.contact_id,
+                COALESCE(el.recipient_email, c.email) AS email,
+                COALESCE(c.name, '') AS name,
+                COALESCE(c.company, '') AS company,
+                p.name AS product_name,
+                COALESCE(i_log.name, i_contact.name, '—') AS industry_name,
+                co.name AS country_name,
+                CASE WHEN el.contact_id = 0 THEN 'Direct' ELSE 'CSV' END AS send_type,
+                date(el.sent_at) AS send_date
+            FROM email_log el
+            JOIN products p ON p.id = el.product_id
+            LEFT JOIN contacts c ON c.id = el.contact_id AND el.contact_id != 0
+            LEFT JOIN industries i_contact ON i_contact.id = c.industry_id
+            LEFT JOIN industries i_log ON i_log.id = el.industry_id
+            LEFT JOIN countries co ON co.id = c.country_id
+            ORDER BY el.sent_at DESC
+            """
+        ).fetchall()
+
+    grouped = {}
+    for row in rows:
+        day = row["send_date"]
+        if day not in grouped:
+            grouped[day] = {
+                "date": day,
+                "sent": 0,
+                "failed": 0,
+                "emails": [],
+            }
+        if row["status"] == "sent":
+            grouped[day]["sent"] += 1
+        else:
+            grouped[day]["failed"] += 1
+        grouped[day]["emails"].append(row)
+
+    return sorted(grouped.values(), key=lambda g: g["date"], reverse=True)
 
 
 def get_dashboard_stats():

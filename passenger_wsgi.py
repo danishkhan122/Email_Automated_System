@@ -1,8 +1,6 @@
 """Entry point for cPanel "Setup Python App" (Passenger).
 
 Passenger looks for a module-level variable named `application`.
-The 24/7 auto-send does NOT run here (shared hosting kills idle apps).
-Use a cPanel Cron Job that runs `cron_auto_send.py` instead.
 """
 import os
 import sys

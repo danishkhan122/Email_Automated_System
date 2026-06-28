@@ -15,27 +15,20 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
-from config import (
-    ADMIN_PASSWORD,
-    AUTO_SEND_ENABLED,
-    AUTO_SEND_INTERVAL_MINUTES,
-    AUTO_SEND_PER_RUN,
-    DAILY_EMAIL_LIMIT,
-    SECRET_KEY,
-    UPLOADS_DIR,
-)
+from config import ADMIN_PASSWORD, DAILY_EMAIL_LIMIT, SECRET_KEY, UPLOADS_DIR
 from database import (
     add_contacts,
     conn_get_country,
     conn_get_industry,
     create_csv_upload,
     display_name,
-    get_auto_send_status,
     get_contacts_by_upload,
     get_contacts_for_selection,
     get_countries,
     get_dashboard_stats,
     get_email_content,
+    get_email_history_by_day,
+    get_email_history_stats,
     get_product,
     get_product_tree_json,
     get_products,
@@ -48,7 +41,6 @@ from database import (
 from email_service import send_batch, send_direct_email, send_single_contact
 from news_service import get_dashboard_intelligence
 from proposals_config import resolve_proposal_path
-from scheduler import start_auto_sender
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -141,7 +133,6 @@ def logout():
 def dashboard():
     stats_rows, sent_today = get_dashboard_stats()
     intelligence = get_dashboard_intelligence(stats_rows)
-    auto_status = get_auto_send_status()
     return render_template(
         "dashboard.html",
         stats_rows=stats_rows,
@@ -152,10 +143,6 @@ def dashboard():
         pitch_suggestions=intelligence["suggestions"],
         industry_intel=intelligence["intel"],
         news_updated=intelligence["updated"],
-        auto_send_enabled=AUTO_SEND_ENABLED,
-        auto_send_interval=AUTO_SEND_INTERVAL_MINUTES,
-        auto_send_per_run=AUTO_SEND_PER_RUN,
-        auto_status=auto_status,
     )
 
 
@@ -263,6 +250,18 @@ def upload_detail(upload_id):
         "upload_detail.html",
         upload=upload,
         contacts=contacts,
+    )
+
+
+@app.route("/history")
+@login_required
+def email_history():
+    history_days = get_email_history_by_day()
+    stats = get_email_history_stats()
+    return render_template(
+        "history.html",
+        history_days=history_days,
+        stats=stats,
     )
 
 
@@ -485,5 +484,4 @@ def compose_email():
 
 
 if __name__ == "__main__":
-    start_auto_sender(app)
     app.run(debug=True, port=5000)

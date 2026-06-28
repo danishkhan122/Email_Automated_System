@@ -198,7 +198,7 @@ def send_direct_email(to_email, name, company, product_id, industry_id):
             email["plain"],
             attachment,
         )
-        log_direct_email(product["id"], to_email, "sent")
+        log_direct_email(product["id"], to_email, "sent", industry_id=industry["id"])
         display = name.strip() or to_email
         return {
             "ok": True,
@@ -206,5 +206,5 @@ def send_direct_email(to_email, name, company, product_id, industry_id):
             "remaining_today": max(0, DAILY_EMAIL_LIMIT - emails_sent_today()),
         }
     except Exception as exc:
-        log_direct_email(product["id"], to_email, "failed", str(exc))
+        log_direct_email(product["id"], to_email, "failed", industry_id=industry["id"], error_message=str(exc))
         return {"ok": False, "error": str(exc)}

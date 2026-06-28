@@ -109,11 +109,28 @@ def _build(name, company, industry, subject, paragraphs_plain, paragraphs_html, 
             text = text.replace(key, val)
         return text
 
-    from proposals_config import resolve_proposal_filename
+    from proposals_config import resolve_proposal_filename, resolve_video_link
 
     proposal_file = resolve_proposal_filename(product_slug, industry_slug)
-    plain_body = "\n\n".join(apply(p) for p in paragraphs_plain) + "\n\n" + SIGNATURE_PLAIN
-    html_body = _wrap_html("\n".join(_p(apply(p)) for p in paragraphs_html))
+    plain_parts = [apply(p) for p in paragraphs_plain]
+    html_parts = [_p(apply(p)) for p in paragraphs_html]
+
+    video = resolve_video_link(product_slug, industry_slug)
+    if video:
+        plain_parts.append(
+            f"I have also included a short video demo for you to review: {video['label']}\n"
+            f"{video['url']}"
+        )
+        html_parts.append(
+            _p(
+                f'I have also included a short video demo for you to review: '
+                f'<a href="{video["url"]}" style="color:#e11d2a;font-weight:600;text-decoration:none;">'
+                f'{video["label"]}</a>'
+            )
+        )
+
+    plain_body = "\n\n".join(plain_parts) + "\n\n" + SIGNATURE_PLAIN
+    html_body = _wrap_html("\n".join(html_parts))
 
     return {
         "subject": apply(subject),
@@ -133,7 +150,8 @@ PRODUCT_TEMPLATES = {
             "Hi {first_name},",
             "I came across {company} and thought it might be worth a quick conversation. At Sprectex AI, we have been helping teams in the {industry} space hire faster without compromising on candidate quality.",
             "Our AI Recruiter System takes care of the heavy lifting - screening applications, shortlisting the right profiles, and helping your team move from posting to offer letter in far less time. Several HR teams we work with have cut their time-to-hire significantly while actually improving the quality of candidates reaching interview stage.",
-            "I have attached a short proposal that outlines how this could work for {company}. If it looks relevant, I would genuinely love to set up a brief 15-minute call at your convenience - no pressure, just a friendly walkthrough.",
+            "I have attached a short proposal for {company}, and I have also shared an AI Recruiter System demo video in this email so you can see how it works in practice.",
+            "If it looks relevant, I would genuinely love to set up a brief 15-minute call at your convenience - no pressure, just a friendly walkthrough.",
         ],
     },
     "supply_chain": {
@@ -167,7 +185,8 @@ INDUSTRY_TEMPLATES = {
             "Hi {first_name},",
             "I have been speaking with a number of sports organizations lately, and one challenge keeps coming up - getting meaningful performance data from match and training footage without spending hours on manual review.",
             "That is exactly what our AI video analytics platform does for teams like {company}. It automatically tracks player movements, generates performance reports, and gives coaches actionable insights they can use in the next training session - not next month.",
-            "I have attached a proposal for sports organizations. Would you be open to a brief call? I think you will find the demo quite relevant to what your coaching staff is trying to achieve.",
+            "I have attached a proposal for sports organizations, and I have also shared a short Cricket Video Analytics demo video in this email so you can see the platform in action.",
+            "Would you be open to a brief call? I think you will find the demo quite relevant to what your coaching staff is trying to achieve.",
         ],
     },
     "fitness_gyms": {

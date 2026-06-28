@@ -848,6 +848,44 @@ input[type="file"] { padding: 10px 14px; }
   color: var(--muted);
 }
 
+/* ============ EMAIL HISTORY ============ */
+.email-history-card .table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.history-email-table {
+  min-width: 900px;
+}
+
+.history-email-table th {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.history-email-table td {
+  font-size: .86rem;
+}
+
+.col-time {
+  white-space: nowrap;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.badge-type {
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
 /* ============ DRAWER (mobile) ============ */
 .drawer-backdrop { display: none; }
 

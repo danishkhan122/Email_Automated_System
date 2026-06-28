@@ -19,50 +19,6 @@
           <div class="stat-value">{{ remaining_today }}</div>
           <div class="stat-label">Remaining Today</div>
         </div>
-        <div class="stat-card auto-send-card">
-          <div class="stat-value">
-            {% if auto_send_enabled %}
-            <span class="auto-dot on"></span> ON
-            {% else %}
-            <span class="auto-dot off"></span> OFF
-            {% endif %}
-          </div>
-          <div class="stat-label">Auto-Send 24/7</div>
-        </div>
-      </div>
-
-      <div class="card auto-send-panel">
-        <h2>Automatic Email System</h2>
-        <p class="panel-sub">Runs without human interaction — sends industry-specific emails to pending contacts from uploaded CSV files.</p>
-        <div class="auto-send-grid">
-          <div class="auto-send-item">
-            <span class="auto-send-label">Status</span>
-            <span class="auto-send-value">
-              {% if auto_send_enabled %}Active — checking every {{ auto_send_interval }} min{% else %}Disabled{% endif %}
-            </span>
-          </div>
-          <div class="auto-send-item">
-            <span class="auto-send-label">Per run</span>
-            <span class="auto-send-value">Up to {{ auto_send_per_run }} emails (max {{ daily_limit }}/day)</span>
-          </div>
-          <div class="auto-send-item">
-            <span class="auto-send-label">Pending contacts</span>
-            <span class="auto-send-value">{{ auto_status.pending }}</span>
-          </div>
-          <div class="auto-send-item">
-            <span class="auto-send-label">Last auto-run</span>
-            <span class="auto-send-value">
-              {% if auto_status.last_run %}
-              {{ auto_status.last_run.ran_at[:16] }} — {{ auto_status.last_run.sent }} sent, {{ auto_status.last_run.failed }} failed
-              {% else %}
-              Not run yet (starts within {{ auto_send_interval }} min)
-              {% endif %}
-            </span>
-          </div>
-        </div>
-        {% if auto_status.last_run and auto_status.last_run.message %}
-        <p class="auto-send-note">{{ auto_status.last_run.message }}</p>
-        {% endif %}
       </div>
 
       <div class="send-mode-cards">

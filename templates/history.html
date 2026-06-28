@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Email History - Sprectex Email{% endblock %}
+{% block page_title %}Email History{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Email History</h1>
+  <p>All emails sent from this system — name, email, product, and industry.</p>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.total_sent }}</div>
+    <div class="stat-label">Total Sent</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.sent_today }}</div>
+    <div class="stat-label">Sent Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.total_failed }}</div>
+    <div class="stat-label">Failed</div>
+  </div>
+</div>
+
+<div class="card email-history-card">
+  <h2>Sent Emails by Day</h2>
+  <p class="panel-sub">Day-wise log of every email — CSV upload, batch, individual, and direct.</p>
+
+  {% if history_days %}
+  <div class="history-timeline">
+    {% for day in history_days %}
+    <section class="history-day">
+      <div class="history-day-head">
+        <h3>{{ day.date }}</h3>
+        <span class="history-day-stats">
+          {{ day.sent }} sent{% if day.failed %}, {{ day.failed }} failed{% endif %}
+        </span>
+      </div>
+      <div class="table-wrap">
+        <table class="history-email-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Company</th>
+              <th>Product</th>
+              <th>Industry</th>
+              <th>Country</th>
+              <th>Type</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in day.emails %}
+            <tr>
+              <td class="col-time">{{ row.sent_at[11:16] }}</td>
+              <td>{{ row.name or '—' }}</td>
+              <td>{{ row.email }}</td>
+              <td>{{ row.company or '—' }}</td>
+              <td>{{ row.product_name }}</td>
+              <td>{{ row.industry_name }}</td>
+              <td>{{ row.country_name or '—' }}</td>
+              <td><span class="badge badge-type">{{ row.send_type }}</span></td>
+              <td>
+                {% if row.status == 'sent' %}
+                <span class="badge badge-sent">Sent</span>
+                {% else %}
+                <span class="badge badge-failed" title="{{ row.error_message or '' }}">Failed</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty-state">No emails sent yet. Upload contacts or send a direct email to get started.</p>
+  {% endif %}
+</div>
+{% endblock %}
